@@ -679,7 +679,7 @@ dependencies = [
 
 [[package]]
 name = "indicatorMath_ULTRA_Rust"
-version = "1.0.1"
+version = "1.1.0"
 dependencies = [
  "anyhow",
  "chrono",

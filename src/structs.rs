@@ -167,6 +167,9 @@ pub struct AnalysisResult {
     pub win_status: String,
     pub win_con: usize,
     pub loss_con: usize,
+    
+    // SMC Implementation
+    pub smc: Option<crate::smc::SmcResult>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

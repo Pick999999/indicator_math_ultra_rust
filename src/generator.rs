@@ -884,7 +884,11 @@ impl AnalysisGenerator {
 
         let _display_time = ""; // Need Chrono formatting
 
-        let analysis_obj = AnalysisResult {
+        // Calculate SMC
+        let mut smc_ind = crate::smc::SmcIndicator::new(crate::smc::SmcConfig::default());
+        let smc_result = smc_ind.calculate(self.candle_data.as_slice());
+
+        let mut analysis_obj = AnalysisResult {
             index: i,
             candletime: new_candle.time,
             candletime_display: "".to_string(), // TODO
@@ -959,6 +963,7 @@ impl AnalysisGenerator {
             win_status: "".to_string(),
             win_con: 0,
             loss_con: 0,
+            smc: Some(smc_result),
         };
 
         // Update next color of previous

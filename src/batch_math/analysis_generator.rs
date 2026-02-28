@@ -12,98 +12,47 @@ use std::collections::HashMap;
 // ============================================================
 
 /// Embedded mapping from StatusDesc to SeriesCode
+use serde::Deserialize;
+
+#[derive(Deserialize)]
+struct MasterRecord {
+    #[serde(rename = "StatusCode")]
+    status_code: u32,
+    #[serde(rename = "StatusDesc")]
+    status_desc: String,
+}
+
+#[derive(Deserialize)]
+struct MasterData {
+    #[serde(rename = "DataResult")]
+    data_result: Vec<MasterRecord>,
+}
+
+/// Dynamic mapping from StatusDesc to SeriesCode loaded via include_str!
 /// Based on CodeCandleMaster.json
-fn build_status_code_map() -> HashMap<&'static str, u32> {
+fn build_status_code_map() -> HashMap<String, u32> {
     let mut map = HashMap::new();
-    map.insert("L-DD-E-D", 1);
-    map.insert("L-DD-G-C", 2);
-    map.insert("L-DD-G-D", 3);
-    map.insert("L-DD-G-N", 4);
-    map.insert("L-DD-R-C", 5);
-    map.insert("L-DD-R-D", 6);
-    map.insert("L-DD-R-N", 7);
-    map.insert("L-DF-G-C", 8);
-    map.insert("L-DF-G-D", 9);
-    map.insert("L-DF-G-N", 10);
-    map.insert("L-DF-R-C", 11);
-    map.insert("L-DF-R-D", 12);
-    map.insert("L-DF-R-N", 13);
-    map.insert("L-DU-G-C", 14);
-    map.insert("L-DU-G-D", 15);
-    map.insert("L-DU-G-N", 16);
-    map.insert("L-DU-R-C", 17);
-    map.insert("L-DU-R-D", 18);
-    map.insert("L-DU-R-N", 19);
-    map.insert("L-FD-G-C", 20);
-    map.insert("L-FD-G-N", 21);
-    map.insert("L-FD-R-C", 22);
-    map.insert("L-FD-R-N", 23);
-    map.insert("L-FF-G-C", 24);
-    map.insert("L-FF-G-N", 25);
-    map.insert("L-FF-R-N", 26);
-    map.insert("L-FU-G-C", 27);
-    map.insert("L-FU-G-D", 28);
-    map.insert("L-FU-G-N", 29);
-    map.insert("L-FU-R-D", 30);
-    map.insert("L-FU-R-N", 31);
-    map.insert("L-UD-G-C", 32);
-    map.insert("L-UD-G-N", 33);
-    map.insert("L-UD-R-C", 34);
-    map.insert("L-UD-R-N", 35);
-    map.insert("L-UF-G-C", 36);
-    map.insert("L-UF-G-N", 37);
-    map.insert("L-UU-G-C", 38);
-    map.insert("L-UU-G-D", 39);
-    map.insert("L-UU-G-N", 40);
-    map.insert("L-UU-R-D", 41);
-    map.insert("L-UU-R-N", 42);
-    map.insert("M-DD-G-C", 43);
-    map.insert("M-DD-G-D", 44);
-    map.insert("M-DD-G-N", 45);
-    map.insert("M-DD-R-C", 46);
-    map.insert("M-DD-R-D", 47);
-    map.insert("M-DD-R-N", 48);
-    map.insert("M-DF-G-C", 49);
-    map.insert("M-DF-G-N", 50);
-    map.insert("M-DF-R-C", 51);
-    map.insert("M-DF-R-N", 52);
-    map.insert("M-DU-G-C", 53);
-    map.insert("M-DU-G-N", 54);
-    map.insert("M-DU-R-C", 55);
-    map.insert("M-DU-R-N", 56);
-    map.insert("M-FD-G-C", 57);
-    map.insert("M-FD-G-D", 58);
-    map.insert("M-FD-G-N", 59);
-    map.insert("M-FD-R-D", 60);
-    map.insert("M-FD-R-N", 61);
-    map.insert("M-FU-G-C", 62);
-    map.insert("M-FU-G-N", 63);
-    map.insert("M-FU-R-C", 64);
-    map.insert("M-FU-R-N", 65);
-    map.insert("M-UD-E-C", 66);
-    map.insert("M-UD-G-C", 67);
-    map.insert("M-UD-G-D", 68);
-    map.insert("M-UD-G-N", 69);
-    map.insert("M-UD-R-C", 70);
-    map.insert("M-UD-R-D", 71);
-    map.insert("M-UD-R-N", 72);
-    map.insert("M-UF-G-C", 73);
-    map.insert("M-UF-G-D", 74);
-    map.insert("M-UF-G-N", 75);
-    map.insert("M-UF-R-D", 76);
-    map.insert("M-UU-E-D", 77);
-    map.insert("M-UU-E-N", 78);
-    map.insert("M-UU-G-C", 79);
-    map.insert("M-UU-G-D", 80);
-    map.insert("M-UU-G-N", 81);
-    map.insert("M-UU-R-C", 82);
-    map.insert("M-UU-R-D", 83);
-    map.insert("M-UU-R-N", 84);
+    let raw_content = include_str!("../CodeCandleMaster.json");
+
+    // The provided JSON file contains "DataResult": [...] which is missing outer braces
+    let json_to_parse = format!("{{{}}}", raw_content);
+
+    match serde_json::from_str::<MasterData>(&json_to_parse) {
+        Ok(data) => {
+            for record in data.data_result {
+                map.insert(record.status_desc, record.status_code);
+            }
+        }
+        Err(e) => {
+            eprintln!("Failed to parse CodeCandleMaster.json: {}", e);
+        }
+    }
+
     map
 }
 
 lazy_static::lazy_static! {
-    static ref STATUS_CODE_MAP: HashMap<&'static str, u32> = build_status_code_map();
+    static ref STATUS_CODE_MAP: HashMap<String, u32> = build_status_code_map();
 }
 
 /// Lookup SeriesCode from StatusDesc
@@ -234,6 +183,9 @@ pub struct FullAnalysis {
     pub win_status: String,
     pub win_con: i32,
     pub loss_con: i32,
+
+    // SMC Implementation
+    pub smc: Option<crate::smc::SmcResult>,
 }
 
 // ============================================================
@@ -432,6 +384,21 @@ impl AnalysisGenerator {
         self.adx_data = adx_result.adx;
         self.rsi_data = rsi(&self.candles, self.options.rsi_period);
         self.bb_data = bollinger_bands(&self.candles, self.options.bb_period);
+
+        // Calculate SMC
+        let mut smc_ind = crate::smc::SmcIndicator::new(crate::smc::SmcConfig::default());
+        let smc_candles: Vec<crate::structs::Candle> = self
+            .candles
+            .iter()
+            .map(|c| crate::structs::Candle {
+                time: c.time,
+                open: c.open,
+                high: c.high,
+                low: c.low,
+                close: c.close,
+            })
+            .collect();
+        let smc_result = smc_ind.calculate(smc_candles.as_slice());
 
         // Clear previous analysis
         self.analysis_array.clear();
@@ -858,6 +825,11 @@ impl AnalysisGenerator {
                 win_status: String::new(),
                 win_con: 0,
                 loss_con: 0,
+                smc: if i == self.candles.len() - 1 {
+                    Some(smc_result.clone())
+                } else {
+                    None
+                },
             };
 
             self.analysis_array.push(analysis);

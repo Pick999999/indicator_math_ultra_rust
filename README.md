@@ -25,9 +25,11 @@
 * Moving Averages: **EMA**, **HMA**, **EHMA**, **WMA**
 * Momentum/Trend: **RSI**, **MACD**, **ADX**
 * Volatility: **ATR**, **Bollinger Bands**, **Choppiness Index (CI)**
+* Smart Money Concepts (SMC): **Market Structure (CHoCH, BOS)**, **Swing Points**, **Order Blocks**, **FVG**, **Premium/Discount Zones**
 
 ### 5. 🎯 **Status Code Matching**
-ตัวนี้ทีเด็ด! มันสามารถวิเคราะห์และรวมอินดิเคเตอร์สิบกว่าตัว แล้วสรุปสถานะแท่งเทียนนั้นออกมาให้เป็น `SeriesCode` ตัวแปรเดียว (เช่น `M-UU-G-C`) ซึ่งตรงกับรูปแบบ `CandleMasterCode` ที่เอาไว้ใช้พิจารณาเข้าเทรดได้เลยอัตโนมัติ ไม่ต้องมานั่งเขียน if-else เอง
+ตัวนี้ทีเด็ด! มันสามารถวิเคราะห์และรวมอินดิเคเตอร์สิบกว่าตัว แล้วสรุปสถานะแท่งเทียนนั้นออกมาให้เป็น `SeriesCode` ตัวแปรเดียว (เช่น `M-UU-G-C`) ซึ่งตรงกับรูปแบบ `CandleMasterCode` ที่เอาไว้ใช้พิจารณาเข้าเทรดได้เลยอัตโนมัติ ไม่ต้องมานั่งเขียน if-else เอง 
+**อัปเดตใหม่:** ระบบรองรับการตั้งค่าดึงกฎแบบ **Dynamic JSON** ในตอนสั่งบิลด์ ทำให้สามารถอ่านและอัปเดตกฎเทรดจากไฟล์ `CodeCandleMaster.json` (จาก root โปรเจกต์) ได้โดยไม่ต้องไปแกะและฮาร์ดโค้ดใน Library อีกต่อไป
 
 ---
 
@@ -143,7 +145,15 @@ async fn main() {
 *   `u_wick_percent`, `l_wick_percent`: ไส้เทียนบนและล่างยาวกี่เปอร์เซ็นต์ (เช่น ถ้า `l_wick_percent` ยาวมากตอนอยู่แถวแนวรับ ก็อาจจับจังหวะ Call/Buy ได้)
 *   `is_abnormal_candle`, `is_abnormal_atr`: ค่า Boolean ห้ามเทรดตอนที่บอกว่า "จริง (True)" เพราะหมายถึงเกิดข่าวลากไส้รุนแรง ราคาช็อกตลาด
 
-#### 4. รหัสลับสถานะ (The Master Code)
+#### 4. ร่องรอยรายใหญ่ (Smart Money Concepts - SMC)
+วิเคราะห์พฤติกรรมกลไกราคาเชิงลึก:
+*   `swing_trend`, `internal_trend`: เทรนด์ของสวิงหลักและสวิงย่อย (`"bullish"`, `"bearish"`)
+*   `structures`: จุดทะลุโครงสร้าง CHoCH (Change of Character) และ BOS (Break of Structure)
+*   `order_blocks`: โซนคำสั่งซื้อขายก้อนใหญ่ที่เกิดจากการทิ้งตัวแรงๆ (Bullish/Bearish Order Blocks)
+*   `fair_value_gaps`: โพรงราคา (FVG) ที่แท่งเทียนพุ่งแรงจนเกิดช่องว่าง
+*   `premium_discount_zone`: โซนราคาถูก (Discount) และโซนของแพง (Premium)
+
+#### 5. รหัสลับสถานะ (The Master Code)
 ตัวนี้เอาไว้ยัดรวมสภาพตลาดทุกอย่างเป็นบรรทัดเดียว เบ็ดเสร็จ:
 *   `status_desc`: เช่น ค่า `"L-DU-U-R-C"` (ยาวกว่า Medium, สั้นตัดกลางทิ่มหัวลง, ยาวชี้หัวขึ้น, แท่งสีแดง, แมคดีชนกัน)
 *   `status_code`: โค้ดแปลจากหน้าเทรด เป็นตัวเลขเช่น `"25"`, `"13"`
@@ -301,7 +311,43 @@ socket.onmessage = function(event) {
   "suggest_color": "",
   "win_status": "",
   "win_con": 0,
-  "loss_con": 0
+  "loss_con": 0,
+  
+  "smc": {
+    "structures": [
+      {
+        "time": 1700000000,
+        "price": 99.0,
+        "structure_type": "BOS",
+        "direction": "bullish",
+        "level": "swing",
+        "start_time": 1699999000
+      }
+    ],
+    "swing_points": [
+      {
+        "time": 1700000000,
+        "price": 102.0,
+        "swing_type": "HH",
+        "swing": "high"
+      }
+    ],
+    "order_blocks": [],
+    "fair_value_gaps": [],
+    "equal_highs_lows": [],
+    "premium_discount_zone": {
+      "start_time": 1699995000,
+      "end_time": 1700000060,
+      "premium_top": 105.0,
+      "premium_bottom": 104.5,
+      "equilibrium": 100.0,
+      "discount_top": 95.5,
+      "discount_bottom": 95.0
+    },
+    "strong_weak_levels": [],
+    "swing_trend": "bullish",
+    "internal_trend": "bearish"
+  }
 }
 ```
 
@@ -347,6 +393,17 @@ socket.onmessage = function(event) {
 * `ema_cut_long_type`: `"UpTrend"`, `"DownTrend"` บอกสายลมหลัก
 * `candles_since_ema_cut`: ผ่านมากี่แท่งหลังจากจุด Golden Cross (ถ้าน้อยกว่า 3 มักเป็นจุดเพิ่งเริ่มเทรนด์)
 * `up_con_medium_ema`, `down_con_medium_ema`...: ดัชนีนับคอมโบ (Combo counters) ของเส้นที่ชี้ขึ้นกี่มัด ชี้ลงกี่มัดรวด
+
+**หมวดหมู่ Smart Money Concepts (SMC):**
+* `smc.swing_trend`, `smc.internal_trend`: เทรนด์ปัจจุบันของรอบใหญ่และรอบเล็ก (`"bullish"`, `"bearish"`, `"neutral"`)
+* `smc.structures`: อาร์เรย์เก็บประวัติการทำ Break of Structure (BOS) และ Change of Character (CHoCH)
+* `smc.swing_points`: อาร์เรย์ระบุจุดกลับตัว High/Low (เช่น `"HH"` Higher-High, `"LL"` Lower-Low)
+* `smc.order_blocks`: อาร์เรย์เก็บโซน Order Block (OB) ที่เกิดแท่งอิมบาลานซ์ ระบุเป็นกรอบราคา Upper-Lower
+* `smc.fair_value_gaps`: อาร์เรย์เก็บโซน FVG (Fair Value Gap) หรือ Imbalance ที่รอราคาลงมาเติมเต็ม (Mitigate)
+* `smc.equal_highs_lows`: อาร์เรย์เก็บคู่ยอดที่ทำ Equal Highs (EQH) ปลายแหลมสองยอด หรือ Equal Lows (EQL)
+* `smc.premium_discount_zone`: ข้อมูลกล่องคำนวณแบ่งครึ่งราคา Premium โซนของแพงด้านบน / Discount โซนของถูกด้านล่าง
+* `smc.strong_weak_levels`: แนวรับแข็ง/อ่อน (Strong/Weak High-Low)
+*(โครงสร้างข้อมูล SMC ทั้งหมดนี้มีแบบเดียวกับไลบรารี SMCIndicator.js ฝั่ง Frontend)*
 
 **หมวดหมู่รหัสสถานะ (Bot Configuration Codes):**
 * `status_desc`: "รหัสบรรทัดเดียวครอบจักรวาล" สูตรที่ขยำทุกอย่างมาบอกเช่น `L-DU-U-R-C` แปลความง่ายๆ = Mediumอยู่เหนือยาว(L), กลางลงแต่อุ้มสั้นขึ้น(DU), ยาวเชิดตรง(U), สีแดง(R), ถ่างออก(C)

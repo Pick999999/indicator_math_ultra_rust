@@ -217,3 +217,138 @@ socket.onmessage = function(event) {
     }
 };
 ```
+
+---
+
+## 📦 โครงสร้างข้อมูล JSON (AnalysisResult) และคำอธิบายฟิลด์
+
+เมื่อ `indicatorMath_ULTRA_Rust` คำนวณจบแต่ละแท่งเทียน จะทำการคืนค่ากลับมาในรูปแบบ Struct ซึ่งเมื่อส่งข้าม WebSocket ไปยังหน้า Frontend (หรือตอนแปลงเป็น JSON) จะมีหน้าตาและรายละเอียดดังนี้:
+
+```json
+{
+  "index": 120,
+  "candletime": 1700000060,
+  "candletime_display": "2024-XX-XX HH:MM:SS",
+  "open": 100.5,
+  "high": 101.2,
+  "low": 99.8,
+  "close": 101.0,
+  "color": "Green",
+  "next_color": null,
+  "pip_size": 0.5,
+  
+  "ema_short_value": 100.8,
+  "ema_short_direction": "Up",
+  "ema_short_turn_type": "TurnUp",
+  
+  "ema_medium_value": 100.2,
+  "ema_medium_direction": "Up",
+  
+  "ema_long_value": 99.5,
+  "ema_long_direction": "Flat",
+  
+  "ema_above": "ShortAbove",
+  "ema_long_above": "MediumAbove",
+  
+  "macd_12": 0.6,
+  "macd_23": 0.7,
+  
+  "previous_ema_short_value": 100.6,
+  "previous_ema_medium_value": 100.1,
+  "previous_ema_long_value": 99.5,
+  "previous_macd_12": 0.5,
+  "previous_macd_23": 0.6,
+  
+  "ema_convergence_type": "divergence",
+  "ema_long_convergence_type": "D",
+  
+  "choppy_indicator": 45.2,
+  "adx_value": 28.5,
+  "rsi_value": 65.4,
+  
+  "bb_values": {
+    "upper": 102.5,
+    "middle": 100.0,
+    "lower": 97.5
+  },
+  "bb_position": "NearUpper",
+  
+  "atr": 1.4,
+  "is_abnormal_candle": false,
+  "is_abnormal_atr": false,
+  
+  "u_wick": 0.2,
+  "u_wick_percent": 14.28,
+  "body": 0.5,
+  "body_percent": 35.71,
+  "l_wick": 0.7,
+  "l_wick_percent": 50.0,
+  
+  "ema_cut_position": "B1",
+  "ema_cut_long_type": "UpTrend",
+  "candles_since_ema_cut": 5,
+  
+  "up_con_medium_ema": 3,
+  "down_con_medium_ema": 0,
+  "up_con_long_ema": 10,
+  "down_con_long_ema": 0,
+  
+  "is_mark": "n",
+  "status_code": "14",
+  "status_desc": "M-UU-U-G-D",
+  "status_desc_0": "M-UU-U-G-D",
+  "hint_status": "",
+  "suggest_color": "",
+  "win_status": "",
+  "win_con": 0,
+  "loss_con": 0
+}
+```
+
+### คำอธิบายการใช้งานในแต่ละตัวแปร 📝
+
+**หมวดหมู่ข้อมูลทั่วไปของแท่งเทียน (Basic Candle Info):**
+* `index`: ตำแหน่งเรียงลำดับของแท่งเทียนตั้งแต่เริ่ม (History length)
+* `candletime`: เวลาของปิดแท่งเทียนฉบับ Epoch Time (วินาที)
+* `candletime_display`: เวลาที่ถูกจัดการเป็น String (Optional)
+* `open`, `high`, `low`, `close`: ข้อมูลราคาพื้นฐาน
+* `color`: สีของแท่งเทียน (`"Green"`, `"Red"`, `"Equal"`)
+* `next_color`: ใช้ในกรณีวิเคราะห์แท่งเทียนแบบย้อนหลัง (จะรู้สีแท่งในอนาคตเพื่อการทำ Backtesting ได้)
+* `pip_size`: ขนาดส่วนต่างของราคาเปรียบเทียบจาก Open-Close
+
+**หมวดหมู่เส้นค่าเฉลี่ย (Moving Averages - EMA/HMA/WMA):**
+* `ema_short_value`, `medium`, `long`: ตำแหน่ง Y ของจุด EMA (เส้นสั้น, กลาง, ยาว) บนกราฟ
+* `ema_short_direction`, `medium`, `long`: ทิศทางปัจจุบันของแต่ละเส้น ว่าเงยหน้าขึ้น (`"Up"`), ปักหัวลง (`"Down"`), ไซด์เวย์ (`"Flat"`)
+* `ema_short_turn_type`: รูปแบบการกลับตัวของเส้นสั้น (`"TurnUp"`, `"TurnDown"`, `"-"`)
+* `ema_above`, `ema_long_above`: เรียงลำดับว่าเส้นสั้นอยู่เหนือกลาง (ShortAbove) หรือกลางอยู่เหนือยาว (MediumAbove)
+
+**หมวดหมู่ MACD และอัตรถ่างขยาย (Convergence/Divergence):**
+* `macd_12`, `macd_23`: ความห่างระหว่างเส้น (เหมือน MACD Histogram ยิ่งมากยิ่งห่าง)
+* `previous_...`: ค่าประวัติในแท่งก่อนหน้า เพื่อหาโมเมนตัมที่เปลี่ยนไป
+* `ema_convergence_type`: โมเมนตัมระหว่างเส้นสั้นกับกลาง (`"convergence"` = ลู่เข้า, `"divergence"` = ถ่างกว้างขึ้นเรื่อยๆ, `"neutral"`)
+* `ema_long_convergence_type`: การลู่เข้า/ถ่างออกของเส้นกลางกับยาวย่อตัวอักษรเดียว (`"C"`, `"D"`, `"N"`)
+
+**หมวดหมู่อินดิเคเตอร์วัดระดับ (Oscillators & Volatility):**
+* `choppy_indicator`: หาความผันผวนไซด์เวย์ (ยิ่งน้อยเทรนด์ยิ่งแข็ง, ยิ่งมากวิ่งไร้ทิศทาง) 
+* `adx_value`: วัดพลังสปีดของเทรนด์ (ถ้า > 25 แปลว่าวิ่งแรง)
+* `rsi_value`: ดัชนีความแข็งของราคา ไว้หาจังหวะซื้อมากเกินไป (Overbought/Oversold)
+* `bb_values`: { `upper`, `middle`, `lower` } เส้นตำแหน่งของ Bollinger Bands ทั้ง 3 เส้น 
+* `bb_position`: ราคาไปเกาะอยู่โซนไหนของ Band (`"NearUpper"`, `"NearLower"`, `"Middle"`)
+* `atr`: Average True Range วัดระยะทางเฉลี่ยที่แท่งเทียนสวิงตัว
+
+**หมวดหมู่อนาโตมีแท่งเทียนและความผิดปกติ (Anatomy & Abnormality):**
+* `is_abnormal_candle`: แท่งเทียนกระชากตัวรุนแรง (เทียบกับ ATR ส่วนใหญ่มักเกิดจากข่าวหลุด)
+* `is_abnormal_atr`: ค่าแกว่งแท่งนั้นๆ มีปริมาณเนื้อแท่งมหาศาลหรือหดตัวรุนแรงกว่าปกติ
+* `u_wick`, `body`, `l_wick`: ราคาจริงของไส้บน, ตัวเนื้อ, รถม้าล่าง
+* `u_wick_percent`, `body_percent`, `l_wick_percent`: คิดเป็นตัวเลขกี่ % เมื่อนำความสูงเทียนไปหารกับขนาดทั้งดุ้น (สำคัญต่อสายหาแท่งหางยาว)
+
+**หมวดหมู่เส้นตัดทิศทาง (Crossings & Counters):**
+* `ema_cut_position`: จุดที่เส้นราคาตัดกับ EMA (เช่นทะลุตลอดตัว B1, ตัดปลาย 3,4 เป็นต้น)
+* `ema_cut_long_type`: `"UpTrend"`, `"DownTrend"` บอกสายลมหลัก
+* `candles_since_ema_cut`: ผ่านมากี่แท่งหลังจากจุด Golden Cross (ถ้าน้อยกว่า 3 มักเป็นจุดเพิ่งเริ่มเทรนด์)
+* `up_con_medium_ema`, `down_con_medium_ema`...: ดัชนีนับคอมโบ (Combo counters) ของเส้นที่ชี้ขึ้นกี่มัด ชี้ลงกี่มัดรวด
+
+**หมวดหมู่รหัสสถานะ (Bot Configuration Codes):**
+* `status_desc`: "รหัสบรรทัดเดียวครอบจักรวาล" สูตรที่ขยำทุกอย่างมาบอกเช่น `L-DU-U-R-C` แปลความง่ายๆ = Mediumอยู่เหนือยาว(L), กลางลงแต่อุ้มสั้นขึ้น(DU), ยาวเชิดตรง(U), สีแดง(R), ถ่างออก(C)
+* `status_code`: Code ตัวเลขเช่น `"13"`, `"25"` ที่แปลงค่า Desc ให้เป็นเลขแมตช์เข้าตาราง
+* `is_mark`, `hint_status`, `suggest_color` : ส่วนรองรับอื่นๆ ไว้ฉีดสัญญาณบอกผู้ใช้ในระบบ Frontend

@@ -954,6 +954,7 @@ dependencies = [
  "chrono",
  "dashmap",
  "env_logger",
+ "futures-channel",
  "futures-util",
  "getrandom 0.2.17",
  "js-sys",
@@ -969,6 +970,7 @@ dependencies = [
  "tokio-tungstenite",
  "url",
  "wasm-bindgen",
+ "wasm-bindgen-futures",
  "web-sys",
  "wgpu",
 ]

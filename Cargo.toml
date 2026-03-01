@@ -25,6 +25,9 @@ serde-wasm-bindgen = "0.6"
 wgpu = "0.20"
 bytemuck = { version = "1.16", features = ["derive", "min_const_generics"] }
 pollster = "0.3"
+wasm-bindgen-futures = "0.4"
+js-sys = "0.3"
+futures-channel = "0.3"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 tokio = { version = "1.0", features = ["full"] }

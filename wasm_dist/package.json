@@ -1,0 +1,28 @@
+{
+  "name": "indicatorMath_ULTRA_Rust",
+  "type": "module",
+  "description": "High-performance technical analysis library for financial data, replicating clsAnalysisGenerator.js logic.",
+  "version": "1.2.0",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Pick999999/indicator_math_ultra_rust"
+  },
+  "files": [
+    "indicatorMath_ULTRA_Rust_bg.wasm",
+    "indicatorMath_ULTRA_Rust.js",
+    "indicatorMath_ULTRA_Rust.d.ts"
+  ],
+  "main": "indicatorMath_ULTRA_Rust.js",
+  "types": "indicatorMath_ULTRA_Rust.d.ts",
+  "sideEffects": [
+    "./snippets/*"
+  ],
+  "keywords": [
+    "finance",
+    "analysis",
+    "technical-analysis",
+    "trading",
+    "indicators"
+  ]
+}

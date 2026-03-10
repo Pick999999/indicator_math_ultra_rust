@@ -231,6 +231,61 @@ socket.onmessage = function(event) {
 };
 ```
 
+### 4. การนำไปใช้บนหน้าเว็บ (WebAssembly Wasm) สำหรับ Frontend แข็งแกร่ง
+
+ในเวอร์ชันนี้ ระบบรองรับการนำไลบรารีไปรันพ่วงกับโปรเจกต์ React/Vue/HTML ดิบ ผ่าน **WebAssembly** ได้โดยตรง ซึ่งมี 2 โหมดการประมวลผล:
+
+#### โหมด CPU Wasm (Incremental Ticking) ⚡
+ใช้สำหรับการอัปเดตราคาแบบทีละ Tick ตามเรียลไทม์ แบบเดียวบนฝั่งเซิร์ฟเวอร์ แต่รันผ่าน Web Worker ประจำเครื่องลูกค้าแทน:
+```html
+<script type="module">
+    import init, { WasmAnalysisGenerator } from './wasm_dist/indicatorMath_ULTRA_Rust.js';
+
+    async function run() {
+        await init(); // โหลด Wasm
+
+        // 1. จำลองการตั้งค่า Option เหมือนใน Rust
+        const options = { ema1_period: 20, ema1_type: "EMA", /*...ตั้งค่าอื่นๆ*/ };
+        const generator = new WasmAnalysisGenerator(JSON.stringify(options));
+
+        // 2. ป้อนประวัติเก่าเข้าไปครั้งแรก (Array ของแท่งเทียน)
+        generator.initialize(JSON.stringify(history_candles));
+
+        // 3. ป้อนราคา Live Tick สดๆ
+        let result = generator.append_tick(150.5, 1700000000); 
+        
+        if (result) {
+            console.log("ปิดแท่งเทียนแล้ว! ได้รหัส:", result.status_desc);
+        }
+    }
+    run();
+</script>
+```
+
+#### โหมด GPU Wasm (WebGPU Array Computation) 🚀(Experimental)
+ใช้พลังมหาศาลของการ์ดจอ (GPU) บนเบราว์เซอร์ คำนวณขนานหลักล้านข้อมูลเสร็จใน 1 มิลลิวินาที! (เหมาะสำหรับโหลด History 10,000 แท่ง หรือดูทีละ 1,000 คู่เหรียญพร้อมกัน):
+```html
+<script type="module">
+    import init, { GpuAnalysisManager } from './wasm_dist/indicatorMath_ULTRA_Rust.js';
+
+    async function run() {
+        await init();
+        
+        // ร้องขอใช้งานการ์ดจอ (GPU) บน Web
+        const gpuManager = await GpuAnalysisManager.initialize();
+        
+        // เตรียมข้อมูลราคานับล้านแท่ง
+        const prices = new Float32Array([...หลักล้านตัวเลข...]);
+
+        // ยิงข้อมูลใส่ VRAM เพื่อประมวลผลผ่าน Compute Shader
+        const result = await gpuManager.dispatch_compute(prices);
+        
+        console.log("คำนวณ SMA(20) นับล้านแท่งเสร็จแล้ว:", result);
+    }
+    run();
+</script>
+```
+
 ---
 
 ## 📦 โครงสร้างข้อมูล JSON (AnalysisResult) และคำอธิบายฟิลด์

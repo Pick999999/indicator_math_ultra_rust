@@ -27,13 +27,13 @@ export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembl
 
 export interface InitOutput {
     readonly memory: WebAssembly.Memory;
-    readonly __wbg_gpuanalysismanager_free: (a: number, b: number) => void;
-    readonly gpuanalysismanager_initialize: () => any;
-    readonly gpuanalysismanager_dispatch_compute: (a: number, b: any) => any;
     readonly __wbg_wasmanalysisgenerator_free: (a: number, b: number) => void;
     readonly wasmanalysisgenerator_new: (a: number, b: number) => [number, number, number];
     readonly wasmanalysisgenerator_initialize: (a: number, b: number, c: number) => [number, number];
     readonly wasmanalysisgenerator_append_tick: (a: number, b: number, c: bigint) => [number, number, number];
+    readonly __wbg_gpuanalysismanager_free: (a: number, b: number) => void;
+    readonly gpuanalysismanager_initialize: () => any;
+    readonly gpuanalysismanager_dispatch_compute: (a: number, b: any) => any;
     readonly wasm_bindgen__closure__destroy__h3bf366df1d79677e: (a: number, b: number) => void;
     readonly wasm_bindgen__closure__destroy__h79716379af6b2fb6: (a: number, b: number) => void;
     readonly wasm_bindgen__convert__closures_____invoke__h923665ad007a5b37: (a: number, b: number, c: any, d: any) => void;
